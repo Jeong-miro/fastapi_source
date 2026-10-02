@@ -1,5 +1,7 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session,selectinload
+from sqlalchemy import select
 from repository.models.board import Board
+from repository.models.comment import Comment
 from schemas.board import BoardCreate,BoardUpdate
 from exceptions.board import BoardNotFoundException
 import math
@@ -7,7 +9,7 @@ import math
 
 def create(db:Session,data:BoardCreate):
     # 스키마 => 테이블 연결 모델
-    board = Board(title=data.title,contents=data.contents,user_id=data.userId)
+    board = Board(title=data.title,contents=data.contents,user_id=data.user_id)
     db.add(board)
     db.commit()
     db.refresh(board)
@@ -30,13 +32,41 @@ def update(db:Session,data:BoardUpdate,id:int):
     db.commit()
     return id 
 # id 와 일치하는 baord 하나 조회
+# def select_one(db:Session, id:int):
+#     board = db.get(Board,id)
+
+#     if board is None:
+#         raise BoardNotFoundException
+
+#     return board
+
+# id 와 일치하는 board 하나 조회 + 댓글 함께
 def select_one(db:Session, id:int):
-    board = db.get(Board,id)
+
+    # 유저정보 join 해서 가져오기
+    stmt = select(Board).options(
+        selectinload(Board.user), # 게시글 작성자 정보
+        selectinload(Board.comments).selectinload(Comment.user)
+        # 게시글의 댓글과              댓글 쓴 유저(작성자)         같이 가져오기
+    ).where(Board.id == id)
+
+    board = db.scalar(stmt)
 
     if board is None:
         raise BoardNotFoundException
 
     return board
+
+
+
+# 최신글 4개 가져오기
+def recentPosts(db:Session):
+    # 최신게시물 4개 추출
+    return db.query(Board).order_by(Board.created_at.desc()).limit(4).all()
+
+
+
+
 # page,size 이용하는 전체조회
 def select_all(db:Session,page:int,size:int):
     # select * from boards by id desc limit 20,10

@@ -21,3 +21,5 @@ class User(Base):
     created_at:Mapped[datetime] = mapped_column(DateTime,default=datetime.now)
     #user.board. 으로 접근 (user의 입장)
     boards:Mapped[list["Board"]]=relationship(back_populates="user")
+
+    comments: Mapped[list["Comment"]] = relationship(back_populates="user")
