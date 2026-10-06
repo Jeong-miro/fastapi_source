@@ -18,7 +18,6 @@ class CommentResponse(BaseModel):
     created_at:datetime
 
 class BoardCreate(BaseModel):
-    user_id: int
     title:str
     contents:str
 
