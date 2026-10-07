@@ -5,6 +5,7 @@ from utils.security import verify_access_token
 from repository.database import get_db
 from repository.models.user import User
 from exceptions.user import UserNotFoundException,UserCredentialException
+from services.user import get_user
 
 # form submit 으로 넘어오는 경우
 # oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")+
@@ -20,9 +21,4 @@ def get_current_user(credentails:HTTPAuthorizationCredentials=Depends(security),
     if user_id is None:
         raise UserCredentialException
 
-    user = db.get(User,user_id)
-
-    if user is None:
-        raise UserNotFoundException
-
-    return user
+    return get_user(db=db, user_id=user_id)

@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session,selectinload
+from sqlalchemy.orm import Session,selectinload,contains_alias,contains_eager
 from sqlalchemy import select
 from repository.models.board import Board
 from repository.models.comment import Comment
@@ -74,11 +74,20 @@ def recentPosts(db:Session):
 
 
 
-# page,size 이용하는 전체조회
-def select_all(db:Session,page:int,size:int):
+# page,size 이용하는 전체조회 ( + 검색 기능 )
+def select_all(db:Session,page:int,size:int, criteria:str, keyword:str):
     # select * from boards by id desc limit 20,10
     query = db.query(Board)
 
+    if keyword:
+        if criteria == "tc":
+            query = query.filter(Board.title.contains(keyword) | Board.contents.contains(keyword))
+        elif criteria == "t":
+            query = query.filter(Board.title.contains(keyword))
+        elif criteria == "w":
+            query = query.join(Board.user).filter(User.name.contains(keyword))
+
+            
     # 전체 개수(페이지 수 알아내기 위해)
     total = query.count()
     offset = (page - 1) * size
@@ -90,6 +99,8 @@ def select_all(db:Session,page:int,size:int):
         "page":page,
         "size":size,
         "total_pages":total_pages,
+        "criteria":criteria,
+        "keyword":keyword,
     }
 # 삭제
 def delete(db:Session, id:int, current_user: User):

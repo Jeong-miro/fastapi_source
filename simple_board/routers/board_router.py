@@ -21,9 +21,9 @@ async def get_boards_recents(db: Session = Depends(get_db)):
 # 전체 조회 + GET : http://localhost:8000/boards
 
 @board_router.get("", response_model=BoardPageResponse)
-async def get_boards(db: Session = Depends(get_db),page:int=1,size:int=10):
+async def get_boards(db: Session = Depends(get_db),page:int=1,size:int=10,criteria:str="",keyword:str=""):
     
-    result = select_all(db=db,page=page,size=size)
+    result = select_all(db=db,page=page,size=size,criteria=criteria,keyword=keyword)
     
     return result
 
@@ -65,6 +65,8 @@ async def put_board(
         id = update(db=db,id=id,data=update_board,current_user=current_user)
     except BoardNotFoundException:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="찾는 board가 없습니다.")
+    except UserCredentialException:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="수정 권한이 없습니다.")
     return {"message":f"{id} 번이 수정되었습니다."}  
   
 
@@ -79,6 +81,9 @@ async def delete_board(
         id = delete(db=db,id=id,current_user=current_user)
     except BoardNotFoundException:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="찾는 board가 없습니다.")
+    except UserCredentialException:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="수정 권한이 없습니다.")
+
     return {"message":f"{id} 번이 삭제되었습니다."}      
     
 
